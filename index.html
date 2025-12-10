@@ -68,10 +68,9 @@
         .todo-content { flex-grow: 1; margin-left: 4px; height: 36px; min-height: 24px; overflow-y: auto; line-height: 1.4; }
         .todo-content.completed { text-decoration: line-through; color: #ccc; }
         
-        /* [수정] 완료된 항목은 편집 불가 스타일 적용 */
         .todo-content[readonly] { 
             color: #aaa; 
-            cursor: default; /* 클릭 시 커서 모양 변경 */
+            cursor: default; 
         }
 
         /* Priority Selector Styles */
@@ -87,7 +86,7 @@
             z-index: 10;
         }
         .priority-current { 
-            font-size: 13px; /* 글자 크기 조정 */
+            font-size: 13px; 
             font-weight: bold;
             line-height: 1; 
             user-select: none;
@@ -120,7 +119,7 @@
         }
         .priority-option:hover { background: #f3f4f6; }
         
-        /* Priority Colors (업무, 개인, 교회, 기타) */
+        /* Priority Colors */
         .prio-3 { color: #1e88e5; } /* 업무 - Blue */
         .prio-2 { color: #43a047; } /* 개인 - Green */
         .prio-1 { color: #8e24aa; } /* 교회 - Purple */
@@ -495,6 +494,7 @@
 
     // Expose functions needed globally
     window.appSave = window.triggerSave; 
+    window.forceSave = saveToCloud; // [추가] 즉시 저장 기능 노출
 
 </script>
 
@@ -903,30 +903,36 @@
         const originalText = btn.innerText;
         btn.innerText = "전송 중...";
 
-        // 중요도 매핑 함수 (숫자 -> 텍스트)
-        const getPrioText = (val) => {
-            if(val === '3') return '업무';
-            if(val === '2') return '개인';
-            if(val === '1') return '교회';
-            return '기타';
-        };
-
         // 1. 데이터 분류
         const allBlockEls = Array.from(document.querySelectorAll('.todo-block'));
-        const allTodos = allBlockEls.map(r => ({
+        const allTodosRaw = allBlockEls.map(r => ({
             s: r.querySelector('.t-start').value,
             e: r.querySelector('.t-end').value,
             c: r.querySelector('.todo-check').checked,
-            // [수정] 중요도를 텍스트("업무", "개인" 등)로 변환하여 저장
-            p: getPrioText(r.querySelector('.priority-current').getAttribute('data-val')),
+            p_val: r.querySelector('.priority-current').getAttribute('data-val') || '0', // Keep raw '0'~'3'
             t: r.querySelector('.todo-content').value
         }));
 
-        // 1-1. 내보낼 데이터 (체크된 것만)
-        const exportTodos = allTodos.filter(t => t.c === true);
+        // 2. 중요도 매핑 함수 (숫자 -> 도형)
+        const getPrioShape = (val) => {
+            if(val === '3') return '★';
+            if(val === '2') return '■';
+            if(val === '1') return '●';
+            return '○';
+        };
+
+        const exportTodos = allTodosRaw
+            .filter(t => t.c === true)
+            .map(t => ({
+                s: t.s,
+                e: t.e,
+                c: t.c,
+                p: getPrioShape(t.p_val), // Convert for Sheet
+                t: t.t
+            }));
         
-        // 1-2. 남길 데이터 (체크 안 된 것 중 내용이 있는 것)
-        const keptTodos = allTodos.filter(t => t.c === false && t.t.trim() !== "");
+        // 3. Keep Unchecked items (Start date, Content, Priority)
+        const keptTodos = allTodosRaw.filter(t => t.c === false && t.t.trim() !== "");
 
         // 2. 타임라인 데이터 수집 (배열로 수집)
         const timelineData = Array.from(document.querySelectorAll('.timeline-block'))
@@ -1002,20 +1008,21 @@
         });
 
         // C. 미완료 항목(keptItems)을 위에서부터 채워 넣기
-        // 주의: 위 export에서 'p'를 텍스트로 바꿨으므로, keptItems를 만들 때 원본 data-val을 유지해야 함.
-        // exportData 함수 내에서 keptTodos 생성 시 원본 data-val을 사용하도록 수정되어 있음? 
-        // 아, 위 exportData에서 p값을 텍스트로 변환해버렸네요.
-        // keptTodos를 위해 원본 p값(숫자)을 가져오도록 코드를 약간 수정해야 합니다. (아래 참고)
-        
-        // 하지만 여기서 exportData 내 map 함수를 보면 p값을 getPrioText로 변환해버림.
-        // 따라서 resetAndRestore에 넘길 때는 p값이 '업무', '개인' 등 텍스트임.
-        // updatePriorityUI는 숫자('3', '2'...)를 기대함.
-        // => 역매핑이 필요하거나, exportData에서 변환하지 말고 GAS로 보낼 때 변환해야 함.
-        
-        // 간단한 해결책: exportData에서 p값을 변환하지 않고, GAS로 보낼때만 변환하거나,
-        // 아니면 여기서 역매핑을 해줍니다.
-        // 여기서는 간단하게 keptTodos를 만들 때 p값을 변환하지 않은 원본(숫자)을 다시 가져오겠습니다. (아래 수정됨)
-        
-        // *수정된 로직*: exportData 함수 내에서 `allTodos` map 할 때 `p_raw` 같은 속성으로 원본 값 저장.
+        keptItems.forEach((item, index) => {
+            if(blocks[index]) {
+                blocks[index].querySelector('.t-start').value = item.s;
+                blocks[index].querySelector('.t-end').value = item.e; 
+                blocks[index].querySelector('.todo-content').value = item.t;
+                
+                const p = blocks[index].querySelector('.priority-current');
+                // item.p_val is raw '0'~'3'
+                if(p) updatePriorityUI(p, item.p_val);
+            }
+        });
+
+        // D. 변경된 상태 저장 (동기화)
+        if(window.forceSave) window.forceSave(); // Force immediate save
     }
 </script>
+</body>
+</html>
