@@ -203,7 +203,22 @@
             .card { min-height: auto; }
             
             .calendar-card { min-height: 900px !important; flex: auto; }
-            .note-card { min-height: 300px; flex: auto; }
+            
+            /* [수정] Note 카드 높이 고정 및 내부 스크롤 강제 */
+            .note-card { 
+                height: 400px !important; 
+                min-height: 400px; 
+                flex: none; 
+                display: flex; 
+                flex-direction: column; 
+            }
+            .note-card .note-area-rich {
+                flex-grow: 1;
+                height: 0; /* 부모 높이 내에서 스크롤 생성용 */
+                min-height: 0;
+                overflow-y: auto;
+            }
+            
             .sp-card, .sum-card { min-height: auto; flex: auto; }
             .sp-grid, .sum-grid { flex-direction: column; height: auto; gap: 15px; }
             .sp-item, .sum-item { height: auto; min-height: 180px; }
@@ -254,7 +269,6 @@
     <div class="column">
         <div class="card" style="flex: 0 0 auto;">
             <div class="section-title title-red">Top Priority 3</div>
-            <!-- [수정] 체크박스가 포함된 우선순위 입력 구조 -->
             <div id="priorityBox">
                 <div class="priority-row">
                     <input type="checkbox" class="priority-check">
@@ -1107,4 +1121,3 @@
 </script>
 </body>
 </html>
-
