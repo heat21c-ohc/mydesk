@@ -122,10 +122,11 @@
         .priority-option:hover { background: #f3f4f6; }
         
         /* Priority Colors */
-        .prio-3 { color: #1e88e5; } /* 업무 - Blue */
-        .prio-2 { color: #43a047; } /* 개인 - Green */
-        .prio-1 { color: #8e24aa; } /* 교회 - Purple */
-        .prio-0 { color: #bdbdbd; } /* 기타 - Gray */
+        /* 업무:3(Blue), 교회:1(Purple), 개인:2(Green), 기타:0(Gray) */
+        .prio-3 { color: #1e88e5; } 
+        .prio-2 { color: #43a047; } 
+        .prio-1 { color: #8e24aa; } 
+        .prio-0 { color: #bdbdbd; }
 
         /* Time Line */
         .timeline-block { background: #f9fafb; border: 1px solid #eee; border-radius: 6px; padding: 6px; margin-bottom: 8px; }
@@ -691,6 +692,7 @@
         if(window.appSave) window.appSave();
     }
 
+    // [수정됨] ToDo 렌더링 함수: 중요도 선택기 순서 변경 (업무-교회-개인-기타)
     function renderTodo(count) {
         const box = document.getElementById('todoBox');
         let html = '';
@@ -709,12 +711,13 @@
                         <input type="checkbox" class="todo-check" onchange="toggleTodo(this)">
                     </div>
                     
+                    <!-- [수정] 중요도 메뉴 순서 변경: 업무 -> 교회 -> 개인 -> 기타 -->
                     <div class="priority-wrap" onclick="togglePrio(this)">
                         <div class="priority-current prio-0" data-val="0">기</div>
                         <div class="priority-menu">
                             <div class="priority-option prio-3" onclick="setPrio(event, this, '3')">업무</div>
-                            <div class="priority-option prio-2" onclick="setPrio(event, this, '2')">개인</div>
                             <div class="priority-option prio-1" onclick="setPrio(event, this, '1')">교회</div>
+                            <div class="priority-option prio-2" onclick="setPrio(event, this, '2')">개인</div>
                             <div class="priority-option prio-0" onclick="setPrio(event, this, '0')">기타</div>
                         </div>
                     </div>
@@ -747,10 +750,13 @@
         el.setAttribute('data-val', val);
         el.className = 'priority-current'; 
         el.classList.add('prio-' + val);
+        
+        // [수정] 표시 텍스트 순서 및 매핑 (데이터 호환성 유지)
+        // 3:업무, 1:교회, 2:개인, 0:기타
         switch(val) {
             case '3': el.innerText = '업'; break;
-            case '2': el.innerText = '개'; break;
             case '1': el.innerText = '교'; break;
+            case '2': el.innerText = '개'; break;
             default:  el.innerText = '기'; break;
         }
     }
@@ -965,7 +971,7 @@
 
     function exportData() {
         // [중요] 새로 배포한 구글 앱스 스크립트 URL을 여기에 넣으세요
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxX3gDWPWkeL4F6A7LVnyH1Ti6QueDJLjbDzO4e2ro4_nNkaX9JQc5m2JNNRNZM53je/exec"; 
+        const scriptURL = "여기에_구글_웹앱_URL_붙여넣기"; 
 
         if(!scriptURL || scriptURL === "여기에_구글_웹앱_URL_붙여넣기") {
             alert("코드를 수정하여 'scriptURL' 변수에 구글 앱스 스크립트 배포 주소를 입력해주세요!");
@@ -978,26 +984,15 @@
         const originalText = btn.innerText;
         btn.innerText = "전송 중...";
 
-        const getPrioShape = (val) => {
-            if(val === '3') return '★';
-            if(val === '2') return '■';
-            if(val === '1') return '●';
-            return '○';
+        // [수정] 중요도 매핑 함수 (숫자 -> 텍스트, 순서 정리)
+        const getPrioText = (val) => {
+            if(val === '3') return '업무';
+            if(val === '1') return '교회';
+            if(val === '2') return '개인';
+            return '기타';
         };
 
-        // 1. Priority Data (체크된 것만 추출)
-        const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
-        // export용: 체크된 텍스트만 배열로 추출
-        const exportPri = priRows
-            .filter(r => r.querySelector('input[type="checkbox"]').checked)
-            .map(r => r.querySelector('textarea').value);
-        
-        // restore용: 체크 안 된 텍스트만 추출 (위로 올리기 위해)
-        const keptPriTexts = priRows
-            .filter(r => !r.querySelector('input[type="checkbox"]').checked && r.querySelector('textarea').value.trim() !== "")
-            .map(r => r.querySelector('textarea').value);
-
-        // 2. ToDo Data
+        // 1. 데이터 분류
         const allBlockEls = Array.from(document.querySelectorAll('.todo-block'));
         const allTodosRaw = allBlockEls.map(r => ({
             s: r.querySelector('.t-start').value,
@@ -1013,7 +1008,7 @@
                 s: t.s,
                 e: t.e,
                 c: t.c,
-                p: getPrioShape(t.p_val), 
+                p: getPrioText(t.p_val), 
                 t: t.t
             }));
         
@@ -1029,7 +1024,7 @@
             .filter(l => l.t.trim() !== ""); 
 
         const payload = {
-            pri: exportPri, // 체크된 것만 전송 (GAS에서 배열 길이만큼 채움)
+            pri: Array.from(document.querySelectorAll('#priorityBox textarea')).map(e=>e.value),
             todo: exportTodos, 
             line: timelineData, 
             note: document.getElementById('mainNote').innerText,
@@ -1053,7 +1048,7 @@
         .then(data => {
             if(data.result === 'success') {
                 alert("성공적으로 저장되었습니다!\n각 항목이 개별 행으로 입력됩니다.");
-                resetAndRestore(keptTodos, keptPriTexts);
+                resetAndRestore(keptTodos);
             } else {
                 alert("전송 실패: " + data.error);
             }
@@ -1061,15 +1056,14 @@
         .catch(error => {
             console.error('Export Error:', error);
             alert("전송 요청 완료! (데이터가 시트에 들어갔는지 확인하세요)\n화면을 정리합니다.");
-            resetAndRestore(keptTodos, keptPriTexts);
+            resetAndRestore(keptTodos);
         })
         .finally(() => {
             btn.innerText = originalText;
         });
     }
 
-    // [수정됨] 복구 로직에 Priority 처리 추가
-    function resetAndRestore(keptTodos, keptPriTexts) {
+    function resetAndRestore(keptTodos) {
         // A. 초기화
         const priRows = document.querySelectorAll('#priorityBox .priority-row');
         priRows.forEach(r => {
@@ -1094,17 +1088,7 @@
             if(p) updatePriorityUI(p, '0'); 
         });
 
-        // B. Priority 복구 (위에서부터 채우기)
-        if (keptPriTexts && keptPriTexts.length > 0) {
-            keptPriTexts.forEach((txt, idx) => {
-                if (priRows[idx]) {
-                    priRows[idx].querySelector('textarea').value = txt;
-                    // 체크박스는 해제 상태로 둠 (새로 시작하니까)
-                }
-            });
-        }
-
-        // C. ToDo 복구
+        // B. ToDo 복구
         keptTodos.forEach((item, index) => {
             if(blocks[index]) {
                 blocks[index].querySelector('.t-start').value = item.s;
