@@ -70,7 +70,6 @@
         .todo-content { flex-grow: 1; margin-left: 4px; height: 36px; min-height: 24px; overflow-y: auto; line-height: 1.4; }
         .todo-content.completed { text-decoration: line-through; color: #ccc; }
         
-        /* 완료된 항목 스타일 */
         .todo-content[readonly] { 
             color: #aaa; 
             cursor: default; 
@@ -124,9 +123,10 @@
         .priority-option:hover { background: #f3f4f6; }
         
         /* Priority Colors */
+        /* 업무:3(Blue), 교회:1(Purple), 개인:2(Green), 기타:0(Gray) */
         .prio-3 { color: #1e88e5; } 
-        .prio-2 { color: #43a047; } 
         .prio-1 { color: #8e24aa; } 
+        .prio-2 { color: #43a047; } 
         .prio-0 { color: #bdbdbd; }
 
         /* Time Line */
@@ -694,6 +694,7 @@
         if(window.appSave) window.appSave();
     }
 
+    // [수정됨] ToDo 렌더링 함수: 중요도 선택기 순서 변경 (업무-교회-개인-기타)
     function renderTodo(count) {
         const box = document.getElementById('todoBox');
         let html = '';
@@ -978,6 +979,19 @@
             return '○';
         };
 
+        // 1. Priority Data (체크된 것만 추출)
+        const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
+        // export용: 체크된 텍스트만 배열로 추출
+        const exportPri = priRows
+            .filter(r => r.querySelector('input[type="checkbox"]').checked)
+            .map(r => r.querySelector('textarea').value);
+        
+        // restore용: 체크 안 된 텍스트만 추출 (위로 올리기 위해)
+        const keptPriTexts = priRows
+            .filter(r => !r.querySelector('input[type="checkbox"]').checked && r.querySelector('textarea').value.trim() !== "")
+            .map(r => r.querySelector('textarea').value);
+
+        // 2. ToDo Data
         const allBlockEls = Array.from(document.querySelectorAll('.todo-block'));
         const allTodosRaw = allBlockEls.map(r => ({
             s: r.querySelector('.t-start').value,
@@ -999,6 +1013,7 @@
         
         const keptTodos = allTodosRaw.filter(t => t.c === false && t.t.trim() !== "");
 
+        // 3. TimeLine Data
         const timelineData = Array.from(document.querySelectorAll('.timeline-block'))
             .map(b => ({
                 s: b.querySelector('.tm-start').value,
@@ -1008,7 +1023,7 @@
             .filter(l => l.t.trim() !== ""); 
 
         const payload = {
-            pri: Array.from(document.querySelectorAll('#priorityBox textarea')).map(e=>e.value),
+            pri: exportPri, // 체크된 것만 전송 (GAS에서 배열 길이만큼 채움)
             todo: exportTodos, 
             line: timelineData, 
             note: document.getElementById('mainNote').innerText,
@@ -1032,7 +1047,7 @@
         .then(data => {
             if(data.result === 'success') {
                 alert("성공적으로 저장되었습니다!\n각 항목이 개별 행으로 입력됩니다.");
-                resetAndRestore(keptTodos);
+                resetAndRestore(keptTodos, keptPriTexts);
             } else {
                 alert("전송 실패: " + data.error);
             }
@@ -1040,14 +1055,15 @@
         .catch(error => {
             console.error('Export Error:', error);
             alert("전송 요청 완료! (데이터가 시트에 들어갔는지 확인하세요)\n화면을 정리합니다.");
-            resetAndRestore(keptTodos);
+            resetAndRestore(keptTodos, keptPriTexts);
         })
         .finally(() => {
             btn.innerText = originalText;
         });
     }
 
-    function resetAndRestore(keptTodos) {
+    function resetAndRestore(keptTodos, keptPriTexts) {
+        // A. 초기화
         const priRows = document.querySelectorAll('#priorityBox .priority-row');
         priRows.forEach(r => {
             r.querySelector('textarea').value = '';
@@ -1071,6 +1087,17 @@
             if(p) updatePriorityUI(p, '0'); 
         });
 
+        // B. Priority 복구 (위에서부터 채우기)
+        if (keptPriTexts && keptPriTexts.length > 0) {
+            keptPriTexts.forEach((txt, idx) => {
+                if (priRows[idx]) {
+                    priRows[idx].querySelector('textarea').value = txt;
+                    // 체크박스는 해제 상태로 둠 (새로 시작하니까)
+                }
+            });
+        }
+
+        // C. ToDo 복구
         keptTodos.forEach((item, index) => {
             if(blocks[index]) {
                 blocks[index].querySelector('.t-start').value = item.s;
