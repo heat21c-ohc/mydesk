@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Smart Dashboard V11 (Cloud Sync)</title>
+    <title>My Smart Dashboard V1.1 (Cloud Sync)</title>
     <style>
         :root {
             --primary-blue: #3b82f6; --dark-blue: #1e3a8a; --danger-red: #d32f2f;
@@ -252,7 +252,7 @@
 </div>
 
 <header>
-    <h1>My DeskV.01</h1>
+    <h1>My DeskV.02</h1>
     <div class="controls">
         <span class="date-display" id="headerDate">Loading...</span>
         <div id="userInfo" class="user-info" style="display:none;">
@@ -313,7 +313,7 @@
         </div>
 
         <div class="card note-card">
-            <div class="section-title title-dark-blue">Note</div>
+            <div class="section-title title-dark-blue">Note (더블클릭: 날짜입력)</div>
             <!-- Editor Toolbar -->
             <div class="editor-toolbar">
                 <select class="editor-select" onchange="formatDoc('fontSize', this.value); this.value='';">
@@ -336,21 +336,41 @@
                 <button class="editor-btn" onclick="formatDoc('justifyCenter')" title="가운데정렬">중</button>
                 <button class="editor-btn" onclick="formatDoc('justifyRight')" title="우측정렬">우</button>
             </div>
-            <div class="note-area-rich" id="mainNote" contenteditable="true" placeholder="메모를 입력하세요..."></div>
+            <!-- Note area with added event handlers -->
+            <div class="note-area-rich" id="mainNote" contenteditable="true" 
+                 placeholder="메모를 입력하세요..." 
+                 onfocus="autoInsertDate(this)" 
+                 ondblclick="insertDateAtCursor(this)"></div>
         </div>
 
         <div class="card sp-card">
-            <div class="section-title title-dark-blue">경건생활</div>
+            <div class="section-title title-dark-blue">경건생활 (더블클릭: 날짜입력)</div>
             <div class="sp-grid">
-                <div class="sp-item"><span class="sp-label bg-green">실천</span><textarea class="sp-text" id="sp1"></textarea></div>
-                <div class="sp-item"><span class="sp-label bg-orange">반성</span><textarea class="sp-text" id="sp2"></textarea></div>
-                <div class="sp-item"><span class="sp-label bg-purple">소망</span><textarea class="sp-text" id="sp3"></textarea></div>
+                <!-- Textareas with added event handlers -->
+                <div class="sp-item">
+                    <span class="sp-label bg-green">실천</span>
+                    <textarea class="sp-text" id="sp1" onfocus="autoInsertDate(this)" ondblclick="insertDateAtCursor(this)"></textarea>
+                </div>
+                <div class="sp-item">
+                    <span class="sp-label bg-orange">반성</span>
+                    <textarea class="sp-text" id="sp2" onfocus="autoInsertDate(this)" ondblclick="insertDateAtCursor(this)"></textarea>
+                </div>
+                <div class="sp-item">
+                    <span class="sp-label bg-purple">소망</span>
+                    <textarea class="sp-text" id="sp3" onfocus="autoInsertDate(this)" ondblclick="insertDateAtCursor(this)"></textarea>
+                </div>
             </div>
         </div>
         <div class="card sum-card">
             <div class="sum-grid">
-                <div class="sum-item thanks"><span class="sum-label">THANKS GOD</span><textarea class="sum-text" id="thanksText"></textarea></div>
-                <div class="sum-item summary"><span class="sum-label">SUMMARY</span><textarea class="sum-text" id="summaryText"></textarea></div>
+                <div class="sum-item thanks">
+                    <span class="sum-label">THANKS GOD</span>
+                    <textarea class="sum-text" id="thanksText" onfocus="autoInsertDate(this)" ondblclick="insertDateAtCursor(this)"></textarea>
+                </div>
+                <div class="sum-item summary">
+                    <span class="sum-label">SUMMARY</span>
+                    <textarea class="sum-text" id="summaryText" onfocus="autoInsertDate(this)" ondblclick="insertDateAtCursor(this)"></textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -574,6 +594,57 @@
                 document.querySelectorAll('.priority-menu').forEach(m => m.style.display = 'none');
             }
         });
+    };
+
+    // --- Helper for Date Insert ---
+    function getShortDateString() {
+        const now = new Date();
+        const yy = now.getFullYear().toString().slice(-2);
+        const mm = (now.getMonth()+1).toString().padStart(2,'0');
+        const dd = now.getDate().toString().padStart(2,'0');
+        const hh = now.getHours().toString().padStart(2,'0');
+        const mi = now.getMinutes().toString().padStart(2,'0');
+        return `[${yy}.${mm}.${dd} ${hh}:${mi}] `;
+    }
+
+    // 1. Auto Insert on Focus (If empty)
+    window.autoInsertDate = function(el) {
+        // 이미 내용이 있으면 건드리지 않음
+        if (el.tagName === 'DIV') { // contenteditable
+            if(el.innerText.trim() === '') {
+                el.innerText = getShortDateString();
+                // 커서를 끝으로 이동 (for DIV)
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        } else { // textarea
+            if(el.value.trim() === '') {
+                el.value = getShortDateString();
+            }
+        }
+    };
+
+    // 2. Insert Date on Double Click (Cursor Position)
+    window.insertDateAtCursor = function(el) {
+        const dateStr = getShortDateString();
+        
+        if (el.tagName === 'DIV') { // Contenteditable
+            document.execCommand('insertText', false, dateStr);
+        } else { // Textarea
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const text = el.value;
+            const before = text.substring(0, start);
+            const after = text.substring(end, text.length);
+            el.value = before + dateStr + after;
+            el.selectionStart = el.selectionEnd = start + dateStr.length;
+            el.focus();
+        }
+        if(window.appSave) window.appSave();
     };
 
     // --- Data Handling (Separated for Sync) ---
@@ -972,7 +1043,7 @@
 
     function exportData() {
         // [중요] 새로 배포한 구글 앱스 스크립트 URL을 여기에 넣으세요
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxX3gDWPWkeL4F6A7LVnyH1Ti6QueDJLjbDzO4e2ro4_nNkaX9JQc5m2JNNRNZM53je/exec"; 
+        const scriptURL = "여기에_구글_웹앱_URL_붙여넣기"; 
 
         if(!scriptURL || scriptURL === "여기에_구글_웹앱_URL_붙여넣기") {
             alert("코드를 수정하여 'scriptURL' 변수에 구글 앱스 스크립트 배포 주소를 입력해주세요!");
