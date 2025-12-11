@@ -123,10 +123,10 @@
         .priority-option:hover { background: #f3f4f6; }
         
         /* Priority Colors */
-        /* 업무:3(Blue), 교회:1(Purple), 개인:2(Green), 기타:0(Gray) */
-        .prio-3 { color: #1e88e5; } 
-        .prio-1 { color: #8e24aa; } 
-        .prio-2 { color: #43a047; } 
+        /* 업무:3(Red), 교회:1(Blue), 개인:2(Green), 기타:0(Gray) */
+        .prio-3 { color: #CC2C1F; } 
+        .prio-2 { color: #000C7B; } 
+        .prio-1 { color: #5ABF4A; } 
         .prio-0 { color: #bdbdbd; }
 
         /* Time Line */
@@ -204,7 +204,7 @@
             .container { grid-template-columns: 1fr; height: auto; display: flex; flex-direction: column; }
             .card { min-height: auto; }
             
-            .calendar-card { min-height: 900px !important; flex: auto; }
+            .calendar-card { min-height: 600px !important; flex: auto; }
             
             /* Note 카드 높이 고정 및 내부 스크롤 강제 */
             .note-card { 
@@ -253,7 +253,7 @@
 </div>
 
 <header>
-    <h1>My Desk V.01</h1>
+    <h1>My Dashboard</h1>
     <div class="controls">
         <span class="date-display" id="headerDate">Loading...</span>
         <div id="userInfo" class="user-info" style="display:none;">
@@ -713,6 +713,7 @@
                         <input type="checkbox" class="todo-check" onchange="toggleTodo(this)">
                     </div>
                     
+                    <!-- [수정] 중요도 메뉴 순서 변경: 업무 -> 교회 -> 개인 -> 기타 -->
                     <div class="priority-wrap" onclick="togglePrio(this)">
                         <div class="priority-current prio-0" data-val="0">기타</div>
                         <div class="priority-menu">
@@ -752,6 +753,8 @@
         el.className = 'priority-current'; 
         el.classList.add('prio-' + val);
         
+        // [수정] 표시 텍스트 순서 및 매핑 (데이터 호환성 유지)
+        // 3:업무, 1:교회, 2:개인, 0:기타
         switch(val) {
             case '3': el.innerText = '업무'; break;
             case '1': el.innerText = '교회'; break;
@@ -972,26 +975,15 @@
         const originalText = btn.innerText;
         btn.innerText = "전송 중...";
 
-        const getPrioShape = (val) => {
-            if(val === '3') return '★';
-            if(val === '2') return '■';
-            if(val === '1') return '●';
-            return '○';
+        // [수정] 중요도 매핑 함수 (숫자 -> 텍스트, 순서 정리)
+        const getPrioText = (val) => {
+            if(val === '3') return '업무';
+            if(val === '1') return '교회';
+            if(val === '2') return '개인';
+            return '기타';
         };
 
-        // 1. Priority Data (체크된 것만 추출)
-        const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
-        // export용: 체크된 텍스트만 배열로 추출
-        const exportPri = priRows
-            .filter(r => r.querySelector('input[type="checkbox"]').checked)
-            .map(r => r.querySelector('textarea').value);
-        
-        // restore용: 체크 안 된 텍스트만 추출 (위로 올리기 위해)
-        const keptPriTexts = priRows
-            .filter(r => !r.querySelector('input[type="checkbox"]').checked && r.querySelector('textarea').value.trim() !== "")
-            .map(r => r.querySelector('textarea').value);
-
-        // 2. ToDo Data
+        // 1. 데이터 분류
         const allBlockEls = Array.from(document.querySelectorAll('.todo-block'));
         const allTodosRaw = allBlockEls.map(r => ({
             s: r.querySelector('.t-start').value,
@@ -1007,11 +999,21 @@
                 s: t.s,
                 e: t.e,
                 c: t.c,
-                p: getPrioShape(t.p_val), 
+                p: getPrioText(t.p_val), 
                 t: t.t
             }));
         
         const keptTodos = allTodosRaw.filter(t => t.c === false && t.t.trim() !== "");
+
+        // 1. Priority Data (체크된 것만 추출)
+        const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
+        const exportPri = priRows
+            .filter(r => r.querySelector('input[type="checkbox"]').checked)
+            .map(r => r.querySelector('textarea').value);
+        
+        const keptPriTexts = priRows
+            .filter(r => !r.querySelector('input[type="checkbox"]').checked && r.querySelector('textarea').value.trim() !== "")
+            .map(r => r.querySelector('textarea').value);
 
         // 3. TimeLine Data
         const timelineData = Array.from(document.querySelectorAll('.timeline-block'))
@@ -1023,7 +1025,7 @@
             .filter(l => l.t.trim() !== ""); 
 
         const payload = {
-            pri: exportPri, // 체크된 것만 전송 (GAS에서 배열 길이만큼 채움)
+            pri: exportPri, // 체크된 것만 전송
             todo: exportTodos, 
             line: timelineData, 
             note: document.getElementById('mainNote').innerText,
@@ -1062,6 +1064,7 @@
         });
     }
 
+    // [수정됨] 복구 로직에 Priority 처리 추가
     function resetAndRestore(keptTodos, keptPriTexts) {
         // A. 초기화
         const priRows = document.querySelectorAll('#priorityBox .priority-row');
@@ -1092,7 +1095,6 @@
             keptPriTexts.forEach((txt, idx) => {
                 if (priRows[idx]) {
                     priRows[idx].querySelector('textarea').value = txt;
-                    // 체크박스는 해제 상태로 둠 (새로 시작하니까)
                 }
             });
         }
@@ -1114,4 +1116,3 @@
 </script>
 </body>
 </html>
-
