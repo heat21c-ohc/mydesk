@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Desk V.01 (Cloud Sync)</title>
+    <title>My Smart Dashboard V11 (Cloud Sync)</title>
     <style>
         :root {
             --primary-blue: #3b82f6; --dark-blue: #1e3a8a; --danger-red: #d32f2f;
@@ -123,7 +123,6 @@
         .priority-option:hover { background: #f3f4f6; }
         
         /* Priority Colors */
-        /* 업무:3(Red), 교회:1(Blue), 개인:2(Green), 기타:0(Gray) */
         .prio-3 { color: #CC2C1F; } 
         .prio-2 { color: #5ABF4A; } 
         .prio-1 { color: #000C7B; } 
@@ -615,13 +614,24 @@
             }
         };
 
-        // [수정] Priority 데이터 적용 (객체 배열 또는 구버전 문자열 배열 호환)
+        // [수정] Priority 데이터 적용 - 안전장치 추가 (객체 vs 문자열 호환)
         const priRows = document.querySelectorAll('#priorityBox .priority-row');
         if(d.pri && Array.isArray(d.pri)) {
             d.pri.forEach((v, i) => {
                 if(priRows[i]) {
-                    const txt = typeof v === 'object' ? v.t : v;
-                    const chk = typeof v === 'object' ? v.c : false;
+                    // v가 객체면 v.t 사용, 아니면(문자열) v 사용, v가 [object Object] 문자열로 깨졌으면 ''로 초기화
+                    let txt = '';
+                    let chk = false;
+                    
+                    if (v !== null && typeof v === 'object') {
+                        txt = v.t || '';
+                        chk = v.c || false;
+                    } else {
+                        txt = String(v);
+                    }
+                    
+                    if (txt === '[object Object]') txt = ''; // 깨진 데이터 복구용
+                    
                     safeVal(priRows[i].querySelector('textarea'), txt);
                     priRows[i].querySelector('input[type="checkbox"]').checked = chk;
                 }
@@ -715,7 +725,7 @@
                     
                     <!-- [수정] 중요도 메뉴 순서 변경: 업무 -> 교회 -> 개인 -> 기타 -->
                     <div class="priority-wrap" onclick="togglePrio(this)">
-                        <div class="priority-current prio-0" data-val="0">기타</div>
+                        <div class="priority-current prio-0" data-val="0">기</div>
                         <div class="priority-menu">
                             <div class="priority-option prio-3" onclick="setPrio(event, this, '3')">업무</div>
                             <div class="priority-option prio-1" onclick="setPrio(event, this, '1')">교회</div>
@@ -969,7 +979,7 @@
             return;
         }
 
-        if(!confirm("체크된 항목만 내보내고 화면을 정리하시겠습니까?")) return;
+        if(!confirm("체크된 항목만 내보내고 화면을 정리하시겠습니까?\n(미완료 항목은 상단으로 이동됩니다)")) return;
 
         const btn = document.querySelector('.btn-export');
         const originalText = btn.innerText;
@@ -999,6 +1009,7 @@
                 s: t.s,
                 e: t.e,
                 c: t.c,
+                // [수정] 내보낼 때 텍스트로 변환 (업무, 개인...)
                 p: getPrioText(t.p_val), 
                 t: t.t
             }));
@@ -1116,5 +1127,3 @@
 </script>
 </body>
 </html>
-
-
