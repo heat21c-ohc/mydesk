@@ -3,318 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Smart Dashboard V11 (Cloud Sync)</title>
+    <title>My Smart Dashboard V14 (Login Restored)</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-blue: #3b82f6; --dark-blue: #1e3a8a; --danger-red: #d32f2f;
-            --soft-gray: #9ca3af; --dark-gray: #333333; --bg-color: #f3f4f6;
-            --card-bg: #ffffff; --border-radius: 12px; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --primary-blue: #3b82f6; --primary-hover: #2563eb;
+            --dark-blue: #1e3a8a; --danger-red: #d32f2f;
+            --soft-gray: #9ca3af; --dark-gray: #333333; 
+            --bg-color: #f3f4f6; --card-bg: #ffffff; 
+            --text-main: #333333; --text-sub: #666666;
+            --border-color: #e5e7eb;
+            --border-radius: 12px; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --bg-color: #111827; --card-bg: #1f2937;
+            --text-main: #f3f4f6; --text-sub: #9ca3af;
+            --border-color: #374151;
+            --dark-blue: #60a5fa; 
+            --danger-red: #f87171;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
         * { box-sizing: border-box; }
-        body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background-color: var(--bg-color); color: var(--dark-gray); margin: 0; padding: 15px; height: 100vh; overflow-y: auto; }
+        body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; height: 100vh; overflow-y: auto; transition: background 0.3s, color 0.3s; }
         
         /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px 25px; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        h1 { margin: 0; font-size: 24px; color: var(--primary-blue); font-weight: 800; }
+        header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px 25px; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; transition: background 0.3s; }
+        h1 { margin: 0; font-size: 24px; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .controls { display: flex; align-items: center; gap: 10px; }
-        .date-display { font-weight: 700; color: var(--dark-gray); margin-right: 10px; font-size: 15px; }
-        .btn { border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        .date-display { font-weight: 700; color: var(--text-main); margin-right: 10px; font-size: 15px; }
+        
+        .btn { border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-export { background-color: var(--primary-blue); }
         .btn-reset { background-color: var(--danger-red); }
-        .btn-login { background-color: #4285F4; } /* Google Blue */
-        .btn-logout { background-color: #757575; }
+        .btn-login { background-color: #4285F4; }
+        .btn-logout { background-color: #4b5563; }
+        .btn-theme { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px; font-size: 16px; }
 
         .user-info { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; color: var(--dark-blue); }
         .user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
 
-        /* Login Overlay */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; width: 90%; }
-        .google-btn { margin-top: 20px; padding: 12px 24px; background: #4285F4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; width: 100%; }
-        .google-btn:hover { background: #357ae8; }
-
-        /* 작은 버튼 스타일 */
-        .btn-sm { padding: 4px 8px; font-size: 11px; background-color: #fff; color: var(--primary-blue); border: 1px solid var(--primary-blue); border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.2s; }
-        .btn-sm:hover { background-color: var(--primary-blue); color: white; }
-
-        /* Grid Layout */
+        /* Container & Cards */
         .container { display: grid; grid-template-columns: 28% 22% 48%; gap: 15px; min-height: 850px; height: calc(100vh - 100px); }
         .column { display: flex; flex-direction: column; gap: 15px; height: 100%; }
-        .card { background: var(--card-bg); border-radius: var(--border-radius); box-shadow: var(--shadow); padding: 15px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); }
+        .card { background: var(--card-bg); border-radius: var(--border-radius); box-shadow: var(--shadow); padding: 15px; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; position: relative; }
         
-        .section-title { font-size: 14px; font-weight: 700; color: var(--soft-gray); text-transform: uppercase; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; margin-bottom: 8px; transition: color 0.3s; }
-        .title-dark-blue { color: var(--dark-blue) !important; opacity: 1; }
-        .title-red { color: var(--danger-red) !important; opacity: 1; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .title-dark-blue { color: var(--dark-blue) !important; }
+        .title-red { color: var(--danger-red) !important; }
 
-        input[type="text"], textarea { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; color: var(--dark-gray); font-size: 13px; padding: 4px; border-radius: 4px; resize: none; }
-        ::placeholder { color: #d1d5db; opacity: 1; }
-        input[type="text"]:focus, textarea:focus { outline: none; background: #f0f9ff; border-bottom: 1px solid var(--primary-blue); }
+        /* Inputs */
+        input[type="text"], textarea { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; color: var(--text-main); font-size: 13px; padding: 4px; border-radius: 4px; resize: none; }
+        ::placeholder { color: var(--text-sub); opacity: 0.6; }
+        input[type="text"]:focus, textarea:focus { outline: none; background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid var(--primary-blue); }
+        
         .scroll-box { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #4b5563; }
         ::-webkit-scrollbar-track { background: transparent; }
 
-        /* Priority & ToDo */
-        .priority-row { margin-bottom: 6px; border-bottom: 1px dashed #eee; height: 32px; display: flex; align-items: center; gap: 8px; }
+        /* Priority */
+        .priority-row { margin-bottom: 6px; border-bottom: 1px dashed var(--border-color); height: 32px; display: flex; align-items: center; gap: 8px; }
         .priority-check { width: 14px; height: 14px; cursor: pointer; accent-color: var(--danger-red); flex-shrink: 0; }
         .priority-input { height: 100%; overflow-y: hidden; line-height: 20px; flex-grow: 1; }
         .priority-input:focus { overflow-y: auto; }
+
+        /* ToDo Items */
+        .todo-block { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px; margin-bottom: 8px; transition: background 0.3s; }
+        .todo-header { display: flex; gap: 4px; margin-bottom: 4px; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px;}
+        .date-input { width: 50%; text-align: center; font-size: 11px; font-weight: bold; color: var(--text-sub); cursor: context-menu; background: rgba(0,0,0,0.02); border-radius: 4px; height: 22px; padding: 2px 0; }
+        .date-input:focus { color: var(--text-main); background: rgba(59, 130, 246, 0.1);}
         
-        .todo-block { background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 6px; margin-bottom: 8px; }
-        .todo-header { display: flex; gap: 4px; margin-bottom: 4px; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;}
-        .date-input { width: 50%; text-align: center; font-size: 11px; font-weight: bold; color: var(--soft-gray); cursor: context-menu; background: #f9fafb; border-radius: 4px; height: 22px; padding: 2px 0; }
-        .date-input:focus { color: var(--dark-gray); background: #f0f9ff;}
         .todo-body { display: flex; align-items: flex-start; }
         .todo-chk-wrap { width: 22px; display: flex; justify-content: center; padding-top: 5px; }
         .todo-check { width: 14px; height: 14px; cursor: pointer; accent-color: var(--primary-blue); margin: 0;}
         .todo-content { flex-grow: 1; margin-left: 4px; height: 36px; min-height: 24px; overflow-y: auto; line-height: 1.4; }
-        .todo-content.completed { text-decoration: line-through; color: #ccc; }
+        .todo-content.completed { text-decoration: line-through; color: var(--text-sub); opacity: 0.7; }
         
-        .todo-content[readonly] { 
-            color: #aaa; 
-            cursor: default; 
-        }
-
-        /* Priority Selector Styles */
-        .priority-wrap { 
-            position: relative; 
-            width: 40px; 
-            height: 24px;
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            margin-top: 2px;
-            cursor: pointer;
-            z-index: 10;
-        }
-        .priority-current { 
-            font-size: 12px;
-            font-weight: bold;
-            line-height: 1; 
-            user-select: none;
-            transition: transform 0.1s;
-            white-space: nowrap;
-        }
+        /* Priority Selector */
+        .priority-wrap { position: relative; width: 26px; height: 24px; display: flex; justify-content: center; align-items: center; margin-top: 2px; cursor: pointer; z-index: 10; }
+        .priority-current { font-size: 13px; font-weight: bold; line-height: 1; user-select: none; transition: transform 0.1s; }
         .priority-current:hover { transform: scale(1.1); }
-        
-        .priority-menu {
-            display: none; 
-            position: absolute; 
-            top: 100%; 
-            left: 0;
-            background: white; 
-            border: 1px solid #eee; 
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            z-index: 100;
-            width: 80px;
-            overflow: hidden;
-        }
-        .priority-option { 
-            padding: 8px 10px; 
-            font-size: 12px; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            cursor: pointer; 
-            color: #333;
-            transition: background 0.1s;
-        }
-        .priority-option:hover { background: #f3f4f6; }
-        
-        /* Priority Colors */
-        .prio-3 { color: #CC2C1F; } 
-        .prio-2 { color: #5ABF4A; } 
-        .prio-1 { color: #000C7B; } 
-        .prio-0 { color: #bdbdbd; }
+        .priority-menu { display: none; position: absolute; top: 100%; left: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; width: 80px; overflow: hidden; }
+        .priority-option { padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main); }
+        .priority-option:hover { background: var(--bg-color); }
+        .prio-3 { color: #3b82f6; } .prio-2 { color: #10b981; } .prio-1 { color: #8b5cf6; } .prio-0 { color: #9ca3af; }
 
-        /* Time Line */
-        .timeline-block { background: #f9fafb; border: 1px solid #eee; border-radius: 6px; padding: 6px; margin-bottom: 8px; }
-        .timeline-header { display: flex; gap: 4px; margin-bottom: 4px; }
-        .time-box { width: 50%; text-align: center; font-size: 11px; font-weight: bold; color: var(--soft-gray); cursor: context-menu; background: white; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; padding: 2px 0; }
-        .time-box.filled { color: var(--dark-gray); border-color: var(--primary-blue); }
-        .timeline-text { height: 40px; overflow-y: auto; }
+        /* Timeline */
+        .timeline-block { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px; margin-bottom: 8px; }
+        .time-box { width: 50%; text-align: center; font-size: 11px; font-weight: bold; color: var(--text-sub); cursor: context-menu; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; height: 22px; padding: 2px 0; }
+        .time-box.filled { color: var(--text-main); border-color: var(--primary-blue); background-color: rgba(59, 130, 246, 0.05); }
 
-        /* Rich Text Editor Styles */
-        .editor-toolbar { display: flex; gap: 4px; padding: 4px 0; border-bottom: 1px solid #eee; margin-bottom: 5px; flex-wrap: wrap; background: #f9fafb; border-radius: 4px; }
-        .editor-btn { border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 3px; padding: 2px 6px; font-size: 11px; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-        .editor-btn:hover { background: #f0f9ff; border-color: var(--primary-blue); }
-        .editor-select { border: 1px solid #ddd; border-radius: 3px; font-size: 11px; padding: 2px; height: 24px; }
-        .note-area-rich { flex-grow: 1; overflow-y: auto; border: 1px solid transparent; font-size: 13px; padding: 4px; border-radius: 4px; outline: none; line-height: 1.5; min-height: 100px; }
-        .note-area-rich:focus { background: #f0f9ff; border-bottom: 1px solid var(--primary-blue); }
-        .note-area-rich b { font-weight: bold; }
-        .note-area-rich i { font-style: italic; }
-        .note-area-rich u { text-decoration: underline; }
-        .note-area-rich s { text-decoration: line-through; }
+        /* Add More Button */
+        .btn-add-more { width: 100%; padding: 8px; background: transparent; border: 1px dashed var(--border-color); color: var(--text-sub); border-radius: 6px; cursor: pointer; font-size: 12px; margin-top: 5px; transition: 0.2s; }
+        .btn-add-more:hover { border-color: var(--primary-blue); color: var(--primary-blue); background: rgba(59, 130, 246, 0.05); }
 
-        /* Right Column Layout */
-        .calendar-card { flex: 1.5; min-height: 200px; padding: 10px; display: flex; flex-direction: column; }
-        .note-card { flex: 1; min-height: 150px; display: flex; flex-direction: column; }
-        .sp-card { flex: 0.8; }
-        .sum-card { flex: 0.8; }
-        
-        .calendar-wrapper { 
-            flex-grow: 1; 
-            width: 100%; 
-            position: relative; 
-            overflow: hidden; 
-            border-radius: 8px; 
-            border: 1px solid #eee;
-        }
-        iframe { 
-            position: absolute; 
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%; 
-            height: 100%; 
-            border: 0; 
-        }
+        /* Rich Text Editor */
+        .editor-toolbar { display: flex; gap: 4px; padding: 4px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 5px; flex-wrap: wrap; background: var(--bg-color); border-radius: 4px; }
+        .editor-btn { border: 1px solid var(--border-color); background: var(--card-bg); cursor: pointer; border-radius: 3px; padding: 2px 6px; font-size: 11px; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: var(--text-main); }
+        .editor-btn:hover { background: rgba(59, 130, 246, 0.1); border-color: var(--primary-blue); }
+        .editor-select { border: 1px solid var(--border-color); border-radius: 3px; font-size: 11px; padding: 2px; height: 24px; background: var(--card-bg); color: var(--text-main); }
+        .note-area-rich { flex-grow: 1; overflow-y: auto; border: 1px solid transparent; font-size: 13px; padding: 4px; border-radius: 4px; outline: none; line-height: 1.5; min-height: 100px; color: var(--text-main); }
+        .note-area-rich:focus { background: rgba(59, 130, 246, 0.05); border-bottom: 1px solid var(--primary-blue); }
 
         /* Sp & Sum */
         .sp-grid { display: flex; gap: 8px; height: 100%; }
         .sp-item { flex: 1; display: flex; flex-direction: column; height: 100%; }
         .sp-label { font-size: 11px; text-align: center; color: white; margin-bottom: 5px; font-weight: bold; flex: 0 0 auto; border-radius: 12px; padding: 3px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .bg-green { background-color: #43a047; }
-        .bg-orange { background-color: #fb8c00; }
-        .bg-purple { background-color: #8e24aa; }
-        .sp-text { flex-grow: 1; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; font-size: 12px; overflow-y: auto; padding: 6px; }
-        .sum-grid { display: flex; gap: 10px; height: 100%; }
-        .sum-item { flex: 1; display: flex; flex-direction: column; border-radius: 6px; padding: 8px; height: 100%; border: 1px solid rgba(0,0,0,0.05); }
-        .sum-item.thanks { background: #fffbeb; }
-        .sum-item.summary { background: #eff6ff; }
-        .sum-label { font-size: 12px; font-weight: 800; text-align: center; color: #555; margin-bottom: 5px; flex: 0 0 auto; }
-        .sum-text { flex-grow: 1; border: 1px solid #e0e0e0; border-radius: 6px; background: white; overflow-y: auto; resize: none; font-size: 12px; padding: 6px; }
-
-        /* Modal & Context Menu */
-        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 20px; border-radius: 12px; width: 300px; }
-        .chk-list label { display: block; margin: 10px 0; cursor: pointer; color: var(--dark-gray); }
-        .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; }
-        #ctxMenu { display: none; position: absolute; background: white; border: 1px solid #ddd; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); border-radius: 6px; z-index: 2000; min-width: 120px; }
-        #ctxMenu div { padding: 8px 15px; font-size: 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        #ctxMenu div:last-child { border-bottom: none; }
-        #ctxMenu div:hover { background: #f3f4f6; }
+        .bg-green { background-color: #10b981; } .bg-orange { background-color: #f59e0b; } .bg-purple { background-color: #8b5cf6; }
+        .sp-text { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); font-size: 12px; overflow-y: auto; padding: 6px; }
         
-        /* Save Status Indicator */
-        #saveStatus { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; padding: 8px 15px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+        .sum-grid { display: flex; gap: 10px; height: 100%; }
+        .sum-item { flex: 1; display: flex; flex-direction: column; border-radius: 6px; padding: 8px; height: 100%; border: 1px solid var(--border-color); }
+        .sum-item.thanks { background: rgba(255, 251, 235, 0.5); }
+        .sum-item.summary { background: rgba(239, 246, 255, 0.5); }
+        [data-theme="dark"] .sum-item.thanks { background: rgba(251, 191, 36, 0.1); }
+        [data-theme="dark"] .sum-item.summary { background: rgba(59, 130, 246, 0.1); }
+        .sum-label { font-size: 12px; font-weight: 800; text-align: center; color: var(--text-sub); margin-bottom: 5px; flex: 0 0 auto; }
+        .sum-text { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); overflow-y: auto; resize: none; font-size: 12px; padding: 6px; }
 
-        /* --- MOBILE OPTIMIZATION --- */
+        /* Responsive */
         @media (max-width: 768px) {
             body { padding: 10px; height: auto; overflow-y: auto; }
             .container { grid-template-columns: 1fr; height: auto; display: flex; flex-direction: column; }
             .card { min-height: auto; }
-            
-            .calendar-card { min-height: 600px !important; flex: auto; }
-            
-            /* Note 카드 높이 고정 및 내부 스크롤 강제 */
-            .note-card { 
-                height: 400px !important; 
-                min-height: 400px; 
-                flex: none; 
-                display: flex; 
-                flex-direction: column; 
-            }
-            .note-card .note-area-rich {
-                flex-grow: 1;
-                height: 0; 
-                min-height: 0;
-                overflow-y: auto;
-            }
-            
+            .calendar-card { min-height: 500px !important; flex: auto; }
+            .note-card { min-height: 300px; flex: auto; }
             .sp-card, .sum-card { min-height: auto; flex: auto; }
             .sp-grid, .sum-grid { flex-direction: column; height: auto; gap: 15px; }
-            .sp-item, .sum-item { height: auto; min-height: 180px; }
-            .sp-text, .sum-text { min-height: 140px; }
-
+            .sp-item, .sum-item { height: auto; min-height: 150px; }
             header { flex-direction: column; align-items: flex-start; }
             .controls { width: 100%; justify-content: space-between; margin-top: 10px; }
         }
+
+        /* Modal & Context Menu */
+        #loginOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-color); z-index: 9999; 
+            display: flex; /* [복구됨] 로그인 화면 표시 */
+            flex-direction: column; justify-content: center; align-items: center; text-align: center; 
+        }
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; width: 90%; }
+        
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: var(--card-bg); padding: 20px; border-radius: 12px; width: 300px; border: 1px solid var(--border-color); }
+        .chk-list label { display: block; margin: 10px 0; cursor: pointer; color: var(--text-main); }
+        
+        #ctxMenu { display: none; position: absolute; background: var(--card-bg); border: 1px solid var(--border-color); box-shadow: 2px 2px 10px rgba(0,0,0,0.1); border-radius: 6px; z-index: 2000; min-width: 120px; }
+        #ctxMenu div { padding: 8px 15px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+        #ctxMenu div:last-child { border-bottom: none; }
+        #ctxMenu div:hover { background: var(--bg-color); }
+        
+        #saveStatus { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; padding: 8px 15px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.5s; pointer-events: none; }
     </style>
 </head>
 <body>
 
-<!-- Login Overlay -->
 <div id="loginOverlay">
     <div class="login-card">
-        <h2 style="color:var(--dark-blue); margin-bottom:10px;">My Cloud Dashboard</h2>
-        <p style="color:#666; font-size:14px; margin-bottom:30px;">
+        <h2 style="color:var(--dark-blue); margin-bottom:10px;">My DeskV.02</h2>
+        <p style="color:var(--text-sub); font-size:14px; margin-bottom:30px;">
             PC와 스마트폰에서 데이터를<br>동기화하기 위해 로그인하세요.
         </p>
-        <button class="google-btn" onclick="googleLogin()">
-            <!-- Google Icon SVG -->
-            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#fff" d="M17.64 9.2c0-.637-.057-1.252-.164-1.841H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#fff" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#fff" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#fff" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-            구글 계정으로 로그인
+        <button class="btn btn-login" style="width:100%; justify-content:center; padding:12px;" onclick="googleLogin()">
+            <i class="fab fa-google"></i> 구글 계정으로 로그인
         </button>
-        <div style="margin-top:20px; font-size:11px; color:#999; text-align:left; background:#f9fafb; padding:10px; border-radius:8px;">
+        <div style="margin-top:20px; font-size:11px; color:var(--text-sub); text-align:left; background:var(--bg-color); padding:10px; border-radius:8px;">
             <b>[필수 설정]</b><br>
-            이 파일의 코드 하단 스크립트 영역에<br>본인의 Firebase Config 값을 입력해야 작동합니다.
+            스크립트 영역의 Firebase Config가 올바른지 확인하세요.
         </div>
     </div>
 </div>
 
 <header>
-    <h1>My DeskV.01</h1>
+    <h1><i class="fas fa-chart-line"></i> My Dashboard</h1>
     <div class="controls">
         <span class="date-display" id="headerDate">Loading...</span>
+        <button class="btn btn-theme" onclick="toggleTheme()" title="테마 변경"><i class="fas fa-moon"></i></button>
         <div id="userInfo" class="user-info" style="display:none;">
             <img id="userImg" class="user-avatar" src="">
             <span id="userName">User</span>
         </div>
-        <button class="btn btn-logout" onclick="logout()" style="display:none;" id="btnLogout">로그아웃</button>
-        <button class="btn btn-export" onclick="exportData()">내보내기</button>
-        <button class="btn btn-reset" onclick="openResetModal()">지우기</button>
+        <button class="btn btn-logout" onclick="logout()" style="display:none;" id="btnLogout"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="btn btn-export" onclick="exportData()"><i class="fas fa-file-export"></i> Export</button>
+        <button class="btn btn-reset" onclick="openResetModal()"><i class="fas fa-trash-alt"></i> Reset</button>
     </div>
 </header>
 
 <div class="container">
-    <!-- Left Column -->
     <div class="column">
         <div class="card" style="flex: 0 0 auto;">
             <div class="section-title title-red">Top Priority 3</div>
             <div id="priorityBox">
-                <div class="priority-row">
-                    <input type="checkbox" class="priority-check">
-                    <textarea class="priority-input" placeholder="1. 우선순위 입력"></textarea>
-                </div>
-                <div class="priority-row">
-                    <input type="checkbox" class="priority-check">
-                    <textarea class="priority-input" placeholder="2. 우선순위 입력"></textarea>
-                </div>
-                <div class="priority-row">
-                    <input type="checkbox" class="priority-check">
-                    <textarea class="priority-input" placeholder="3. 우선순위 입력"></textarea>
-                </div>
+                <div class="priority-row"><input type="checkbox" class="priority-check"><textarea class="priority-input" placeholder="1. 가장 중요한 일"></textarea></div>
+                <div class="priority-row"><input type="checkbox" class="priority-check"><textarea class="priority-input" placeholder="2. 그 다음 중요한 일"></textarea></div>
+                <div class="priority-row"><input type="checkbox" class="priority-check"><textarea class="priority-input" placeholder="3. 잊지 말아야 할 일"></textarea></div>
             </div>
         </div>
         <div class="card" style="flex: 1 1 auto;">
-            <div class="section-title title-dark-blue">To Do List</div>
+            <div class="section-title title-dark-blue">
+                To Do List <span style="font-size:11px; color:var(--text-sub); font-weight:normal;" id="todoCount">(0)</span>
+            </div>
             <div class="scroll-box" id="todoBox"></div>
+            <button class="btn-add-more" onclick="addTodoRow()"><i class="fas fa-plus"></i> 항목 추가</button>
         </div>
     </div>
     
-    <!-- Middle Column -->
     <div class="column">
         <div class="card" style="height: 100%;">
             <div class="section-title title-dark-blue">Time Line</div>
             <div class="scroll-box" id="timelineBox"></div>
+            <button class="btn-add-more" onclick="addTimelineRow()"><i class="fas fa-plus"></i> 항목 추가</button>
         </div>
     </div>
     
-    <!-- Right Column -->
     <div class="column">
         <div class="card calendar-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
                 <div class="section-title title-dark-blue" style="margin: 0; border: none; padding: 0;">Calendar</div>
-                <a href="https://calendar.google.com" target="_blank" class="btn-sm">일정 관리 ↗</a>
+                <a href="https://calendar.google.com" target="_blank" class="btn" style="background:var(--bg-color); color:var(--primary-blue); padding:4px 8px; font-size:11px;">일정 관리 <i class="fas fa-external-link-alt"></i></a>
             </div>
-            <div class="calendar-wrapper">
-                <!-- iframe에 id 추가: calendarFrame -->
-                <iframe id="calendarFrame" src="https://calendar.google.com/calendar/embed?src=en.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul" frameborder="0" scrolling="no"></iframe>
+            <div style="flex-grow: 1; width: 100%; position: relative; overflow: hidden; border-radius: 8px; border: 1px solid var(--border-color);">
+                <iframe id="calendarFrame" src="https://calendar.google.com/calendar/embed?src=en.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
             </div>
         </div>
 
         <div class="card note-card">
             <div class="section-title title-dark-blue">Note</div>
-            <!-- Editor Toolbar -->
             <div class="editor-toolbar">
                 <select class="editor-select" onchange="formatDoc('fontSize', this.value); this.value='';">
                     <option value="" selected disabled>크기</option>
@@ -322,57 +242,53 @@
                     <option value="3">보통</option>
                     <option value="5">크게</option>
                 </select>
-                <div style="width:1px; background:#ddd; margin:0 4px;"></div>
-                <button class="editor-btn" onclick="formatDoc('bold')" title="굵게"><b>B</b></button>
-                <button class="editor-btn" onclick="formatDoc('italic')" title="기울기"><i>I</i></button>
-                <button class="editor-btn" onclick="formatDoc('underline')" title="밑줄"><u>U</u></button>
-                <button class="editor-btn" onclick="formatDoc('strikeThrough')" title="가운데줄"><s>S</s></button>
-                <div style="width:1px; background:#ddd; margin:0 4px;"></div>
-                <button class="editor-btn" onclick="formatDoc('foreColor', '#333333')" title="검정색" style="color:black; font-weight:bold;">A</button>
-                <button class="editor-btn" onclick="formatDoc('foreColor', '#d32f2f')" title="빨강색" style="color:#d32f2f; font-weight:bold;">A</button>
-                <button class="editor-btn" onclick="formatDoc('foreColor', '#3b82f6')" title="파랑색" style="color:#3b82f6; font-weight:bold;">A</button>
-                <div style="width:1px; background:#ddd; margin:0 4px;"></div>
-                <button class="editor-btn" onclick="formatDoc('justifyLeft')" title="좌측정렬">좌</button>
-                <button class="editor-btn" onclick="formatDoc('justifyCenter')" title="가운데정렬">중</button>
-                <button class="editor-btn" onclick="formatDoc('justifyRight')" title="우측정렬">우</button>
+                <div style="width:1px; background:var(--border-color); margin:0 4px;"></div>
+                <button class="editor-btn" onclick="formatDoc('bold')"><b>B</b></button>
+                <button class="editor-btn" onclick="formatDoc('italic')"><i>I</i></button>
+                <button class="editor-btn" onclick="formatDoc('underline')"><u>U</u></button>
+                <button class="editor-btn" onclick="formatDoc('strikeThrough')"><s>S</s></button>
+                <div style="width:1px; background:var(--border-color); margin:0 4px;"></div>
+                <button class="editor-btn" onclick="formatDoc('foreColor', '#333333')" style="color:#333;">A</button>
+                <button class="editor-btn" onclick="formatDoc('foreColor', '#d32f2f')" style="color:#d32f2f;">A</button>
+                <button class="editor-btn" onclick="formatDoc('foreColor', '#3b82f6')" style="color:#3b82f6;">A</button>
             </div>
-            <div class="note-area-rich" id="mainNote" contenteditable="true" placeholder="메모를 입력하세요..."></div>
+            <div class="note-area-rich" id="mainNote" contenteditable="true" onfocus="insertDateTag(this)" placeholder="메모를 입력하세요..."></div>
         </div>
 
         <div class="card sp-card">
             <div class="section-title title-dark-blue">경건생활</div>
             <div class="sp-grid">
-                <div class="sp-item"><span class="sp-label bg-green">실천</span><textarea class="sp-text" id="sp1"></textarea></div>
-                <div class="sp-item"><span class="sp-label bg-orange">반성</span><textarea class="sp-text" id="sp2"></textarea></div>
-                <div class="sp-item"><span class="sp-label bg-purple">소망</span><textarea class="sp-text" id="sp3"></textarea></div>
+                <div class="sp-item"><span class="sp-label bg-green">실천</span><textarea class="sp-text" id="sp1" onfocus="insertDateTag(this)" placeholder="클릭시 날짜 입력됨"></textarea></div>
+                <div class="sp-item"><span class="sp-label bg-orange">반성</span><textarea class="sp-text" id="sp2" onfocus="insertDateTag(this)" placeholder="클릭시 날짜 입력됨"></textarea></div>
+                <div class="sp-item"><span class="sp-label bg-purple">소망</span><textarea class="sp-text" id="sp3" onfocus="insertDateTag(this)" placeholder="클릭시 날짜 입력됨"></textarea></div>
             </div>
         </div>
         <div class="card sum-card">
             <div class="sum-grid">
-                <div class="sum-item thanks"><span class="sum-label">THANKS GOD</span><textarea class="sum-text" id="thanksText"></textarea></div>
-                <div class="sum-item summary"><span class="sum-label">SUMMARY</span><textarea class="sum-text" id="summaryText"></textarea></div>
+                <div class="sum-item thanks"><span class="sum-label">THANKS</span><textarea class="sum-text" id="thanksText" onfocus="insertDateTag(this)" placeholder="오늘 감사한 점..."></textarea></div>
+                <div class="sum-item summary"><span class="sum-label">SUMMARY</span><textarea class="sum-text" id="summaryText" onfocus="insertDateTag(this)" placeholder="오늘의 요약..."></textarea></div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal & Context Menu -->
 <div class="modal-overlay" id="resetModal">
     <div class="modal-box">
-        <h3 style="margin-top:0; color:var(--dark-gray);">항목 지우기</h3>
+        <h3 style="margin-top:0; color:var(--text-main);">항목 지우기</h3>
         <div class="chk-list">
             <label><input type="checkbox" id="chkPri" checked> Top Priority</label>
             <label><input type="checkbox" id="chkTodo" checked> To Do List</label>
             <label><input type="checkbox" id="chkTime" checked> Time Line</label>
             <label><input type="checkbox" id="chkNote" checked> Note & Others</label>
         </div>
-        <div class="modal-btns">
-            <button class="btn" style="background:#ddd; color:#333" onclick="closeResetModal()">취소</button>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px;">
+            <button class="btn" style="background:var(--border-color); color:var(--text-main)" onclick="closeResetModal()">취소</button>
             <button class="btn btn-reset" onclick="executeReset()">삭제</button>
         </div>
     </div>
 </div>
 
-<!-- Context Menu Update -->
 <div id="ctxMenu">
     <div id="ctxItemInsert" onclick="handleCtx('insert')">입력</div>
     <div id="ctxItemManual" onclick="handleCtx('manual')">수동입력</div> 
@@ -381,15 +297,13 @@
 
 <div id="saveStatus">저장됨</div>
 
-<!-- Firebase SDK -->
+<!-- [복구됨] Firebase 모듈 임포트 및 로직 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // -------------------------------------------------------------
-    // [중요] Firebase 콘솔에서 복사한 Config 값을 아래에 붙여넣으세요.
-    // -------------------------------------------------------------
+    // [중요] 기존 파일에서 복구한 Firebase Config입니다.
     const firebaseConfig = {
         apiKey: "AIzaSyDNq4dpGtd7RPH6Gey9V4hH6FwdPkLEavs",
         authDomain: "mydashboard-ohc.firebaseapp.com",
@@ -400,114 +314,69 @@
         measurementId: "G-9NZGEZ4KBF"
     };
 
-    // Initialize Firebase
     let app, auth, db, currentUser;
     let unsubscribeSnapshot = null;
-    let isRemoteUpdate = false; // Flag to prevent saving when receiving data
+    let isRemoteUpdate = false; 
 
     try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
-        console.log("Firebase initialized");
-    } catch (e) {
-        console.error("Firebase Init Error (Config 확인 필요):", e);
-    }
+    } catch (e) { console.error("Firebase Error", e); }
 
-    // --- Auth Functions (Enhanced Error Handling) ---
     window.googleLogin = () => {
-        const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider).catch((error) => {
-            console.error("Login Error:", error);
-            
-            let msg = "로그인 실패: " + error.message;
-            
-            // Check for specific Firebase error codes
-            if (error.code === 'auth/operation-not-allowed') {
-                msg = "설정 오류: Google 로그인이 꺼져 있습니다.\nFirebase 콘솔 > Authentication > Sign-in method 에서 Google을 '사용 설정' 해주세요.";
-            } else if (error.code === 'auth/unauthorized-domain') {
-                msg = "도메인 오류: 현재 주소가 승인되지 않았습니다.\nFirebase 콘솔 > Authentication > Settings > 승인된 도메인에 현재 도메인(IP)을 추가하세요.";
-            } else if (window.location.protocol === 'file:') {
-                msg = "실행 환경 오류: 보안상 HTML 파일을 더블클릭해서 열면 로그인이 안 됩니다.\n\n[해결법]\n1. VS Code의 'Live Server' 확장프로그램 사용 (추천)\n2. 또는 웹 호스팅(GitHub Pages 등)에 올려서 접속";
-            }
-
-            alert(msg);
-        });
+        signInWithPopup(auth, new GoogleAuthProvider()).catch(err => alert("로그인 실패: " + err.message));
     };
 
     window.logout = () => {
-        if(confirm("로그아웃 하시겠습니까?")) {
-            signOut(auth);
-        }
+        if(confirm("로그아웃 하시겠습니까?")) signOut(auth);
     };
 
-    // --- Sync Logic ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
-            // UI Update
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('userInfo').style.display = 'flex';
             document.getElementById('btnLogout').style.display = 'block';
             document.getElementById('userImg').src = user.photoURL;
             document.getElementById('userName').innerText = user.displayName;
-
-            // [추가된 기능] 캘린더 자동 업데이트 (사용자 이메일 기반)
-            const calFrame = document.getElementById('calendarFrame');
+            
+            // 캘린더 업데이트
             if(user.email) {
-                // 이메일에 특수문자가 있을 수 있으므로 인코딩
-                const encodedEmail = encodeURIComponent(user.email);
-                calFrame.src = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FSeoul`;
+                document.getElementById('calendarFrame').src = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(user.email)}&ctz=Asia%2FSeoul`;
             }
-            
-            // Start Sync
-            const docRef = doc(db, "dashboards", user.uid);
-            
-            // Realtime Listener
-            unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+
+            // DB 리스너 연결
+            unsubscribeSnapshot = onSnapshot(doc(db, "dashboards", user.uid), (docSnap) => {
                 if (docSnap.exists()) {
-                    isRemoteUpdate = true; // Block auto-save loop
+                    isRemoteUpdate = true;
                     applyDataToUI(docSnap.data());
                     isRemoteUpdate = false;
-                } else {
-                    // No data yet, try loading from local storage as backup or init empty
-                    console.log("No remote data, starting fresh.");
                 }
             });
-
         } else {
             currentUser = null;
             if(unsubscribeSnapshot) unsubscribeSnapshot();
             document.getElementById('loginOverlay').style.display = 'flex';
             document.getElementById('userInfo').style.display = 'none';
             document.getElementById('btnLogout').style.display = 'none';
-
-            // 로그아웃 시 기본 달력(휴일)으로 복구
-            const calFrame = document.getElementById('calendarFrame');
-            calFrame.src = "https://calendar.google.com/calendar/embed?src=en.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul";
+            document.getElementById('calendarFrame').src = "https://calendar.google.com/calendar/embed?src=en.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul";
         }
     });
 
-    // --- Debounced Save ---
     let saveTimeout;
     window.triggerSave = () => {
         if(!currentUser || isRemoteUpdate) return;
-
-        // Show "Saving..." or similar if desired
         const status = document.getElementById('saveStatus');
         status.innerText = "저장 중...";
         status.style.opacity = 1;
-
         clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => {
-            saveToCloud();
-        }, 1000); // Wait 1 sec after typing stops
+        saveTimeout = setTimeout(saveToCloud, 1000);
     };
 
     async function saveToCloud() {
         if(!currentUser) return;
         const data = collectDataFromUI();
-        
         try {
             await setDoc(doc(db, "dashboards", currentUser.uid), data, { merge: true });
             const status = document.getElementById('saveStatus');
@@ -519,74 +388,148 @@
         }
     }
 
-    // Expose functions needed globally
     window.appSave = window.triggerSave; 
     window.forceSave = saveToCloud; 
-
 </script>
 
 <script>
-    // --- Local UI & Logic ---
+    // General UI Logic
     let ctxTarget = null;
     let ctxType = null;
-
-    // --- [중요 수정] DOM 로드 대기 ---
-    // script가 실행될 때 아직 HTML 요소가 생성되지 않았을 수 있으므로
-    // DOMContentLoaded 이벤트를 사용하여 확실하게 로드된 후 실행합니다.
-    document.addEventListener('DOMContentLoaded', function() {
-        initApp();
-    });
-
-    function initApp() {
-        // [수정] headerDate가 존재하는지 확인 후 실행
-        const headerDate = document.getElementById('headerDate');
-        if (headerDate) {
-            const now = new Date();
-            headerDate.innerText = now.toLocaleDateString('ko-KR', {
-                year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-            });
-        }
-
-        // 렌더링 함수 즉시 실행
-        renderTodo(15);
-        renderTimeline(15);
-
-        // Add Listeners
-        document.body.addEventListener('input', (e) => {
-            if(window.appSave) window.appSave();
-        });
-        document.body.addEventListener('change', (e) => {
-            if(window.appSave) window.appSave();
-        });
-        // Rich text specific listener
-        const mainNote = document.getElementById('mainNote');
-        if (mainNote) {
-            mainNote.addEventListener('input', (e) => {
-                 if(window.appSave) window.appSave();
-            });
-        }
+    
+    // 테마 설정
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
         
+        // 아이콘 변경
+        const btn = document.querySelector('.btn-theme i');
+        btn.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 날짜 표시
+        const now = new Date();
+        document.getElementById('headerDate').innerText = now.toLocaleDateString('ko-KR', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+        });
+
+        // 테마 로드
+        if(localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.querySelector('.btn-theme i').className = 'fas fa-sun';
+        }
+
+        // 초기 행 렌더링 (기본 10개)
+        for(let i=0; i<10; i++) addTodoRow();
+        for(let i=0; i<10; i++) addTimelineRow();
+
+        // 이벤트 리스너
+        document.body.addEventListener('input', (e) => { if(window.appSave) window.appSave(); });
+        document.body.addEventListener('change', (e) => { if(window.appSave) window.appSave(); });
+        
+        // 우선순위 메뉴 닫기
         document.addEventListener('click', (e) => {
             const ctxMenu = document.getElementById('ctxMenu');
             if (ctxMenu) ctxMenu.style.display = 'none';
-            // 중요도 메뉴도 닫기
             if (!e.target.closest('.priority-wrap')) {
                 document.querySelectorAll('.priority-menu').forEach(m => m.style.display = 'none');
             }
         });
-    };
+    });
 
-    // --- Data Handling (Separated for Sync) ---
+    // --- 자동 날짜 태그 입력 함수 ---
+    function insertDateTag(el) {
+        const now = new Date();
+        const dateStr = `[${now.getMonth() + 1}/${now.getDate()}]`; 
+        
+        // ContentEditable (Note 섹션) 지원
+        if (el.isContentEditable && el.tagName === 'DIV') {
+            if (el.innerText.includes(dateStr)) return;
+            
+            const hasContent = el.innerText.trim().length > 0;
+            const htmlToAdd = hasContent ? `<br><b>${dateStr}</b> ` : `<b>${dateStr}</b> `;
+            
+            el.insertAdjacentHTML('beforeend', htmlToAdd);
+
+            try {
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } catch(e) { console.log("Cursor move failed", e); }
+        } 
+        // 기존 Textarea 로직
+        else {
+            if (el.value.includes(dateStr)) return;
+            const prefix = el.value.trim() ? '\n' : '';
+            el.value += `${prefix}${dateStr} `;
+        }
+        
+        el.scrollTop = el.scrollHeight;
+        if(window.appSave) window.appSave();
+    }
+
+    // --- 동적 행 추가 기능 ---
+    function addTodoRow(vals = {}) {
+        const box = document.getElementById('todoBox');
+        const div = document.createElement('div');
+        div.className = 'todo-block';
+        div.innerHTML = `
+            <div class="todo-header">
+                <input type="text" class="date-input t-start" placeholder="시작" readonly onclick="handleDateClick(this)" oncontextmenu="openCtx(event, this, 'reset-only')" value="${vals.s||''}">
+                <input type="text" class="date-input t-end" placeholder="마침" readonly value="${vals.e||''}">
+            </div>
+            <div class="todo-body">
+                <div class="todo-chk-wrap">
+                    <input type="checkbox" class="todo-check" onchange="toggleTodo(this)" ${vals.c?'checked':''}>
+                </div>
+                <div class="priority-wrap" onclick="togglePrio(this)">
+                    <div class="priority-current prio-${vals.p||'0'}" data-val="${vals.p||'0'}">${getPrioChar(vals.p||'0')}</div>
+                    <div class="priority-menu">
+                        <div class="priority-option prio-3" onclick="setPrio(event, this, '3')">업무</div>
+                        <div class="priority-option prio-2" onclick="setPrio(event, this, '2')">개인</div>
+                        <div class="priority-option prio-1" onclick="setPrio(event, this, '1')">교회</div>
+                        <div class="priority-option prio-0" onclick="setPrio(event, this, '0')">기타</div>
+                    </div>
+                </div>
+                <textarea class="todo-content ${vals.c?'completed':''}" placeholder="할 일 입력" ${vals.c?'readonly':''}>${vals.t||''}</textarea>
+            </div>`;
+        box.appendChild(div);
+        updateTodoCount();
+    }
+
+    function addTimelineRow(vals = {}) {
+        const box = document.getElementById('timelineBox');
+        const div = document.createElement('div');
+        div.className = 'timeline-block';
+        div.innerHTML = `
+            <div class="timeline-header">
+                <input type="text" class="time-box tm-start ${vals.s?'filled':''}" placeholder="시작" readonly onclick="handleTimeClick(this)" oncontextmenu="openCtx(event, this, 'time-menu')" value="${vals.s||''}">
+                <input type="text" class="time-box tm-end ${vals.e?'filled':''}" placeholder="마침" readonly onclick="handleTimeClick(this)" oncontextmenu="openCtx(event, this, 'time-menu')" value="${vals.e||''}">
+            </div>
+            <textarea class="timeline-text" placeholder="내용">${vals.t||''}</textarea>`;
+        box.appendChild(div);
+    }
+
+    function updateTodoCount() {
+        const total = document.querySelectorAll('.todo-block').length;
+        document.getElementById('todoCount').innerText = `(${total})`;
+    }
+
+    // --- 데이터 처리 (수집/적용) ---
     function collectDataFromUI() {
-        // [수정] Priority 체크 상태 수집 포함
         const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
-        const priData = priRows.map(r => ({
-            t: r.querySelector('textarea').value,
-            c: r.querySelector('input[type="checkbox"]').checked
-        }));
-
+        
         return {
-            pri: priData, // 이제 문자열 배열이 아니라 객체 배열입니다.
+            pri: priRows.map(r => ({
+                t: r.querySelector('textarea').value,
+                c: r.querySelector('input[type="checkbox"]').checked
+            })),
             todo: Array.from(document.querySelectorAll('.todo-block')).map(r => ({
                 s: r.querySelector('.t-start').value,
                 e: r.querySelector('.t-end').value,
@@ -605,140 +548,93 @@
         };
     }
 
+    // [중요] applyDataToUI는 DB에서 가져온 데이터를 화면에 뿌리는 역할을 합니다.
+    // 기존에 데이터가 있다면 행을 추가하여 보여줍니다.
     function applyDataToUI(d) {
         if(!d) return;
-
-        const safeVal = (el, val) => {
-            if(el && el !== document.activeElement && el.value !== val) {
-                el.value = val;
-            }
-        };
-
-        // [수정] Priority 데이터 적용 - 안전장치 추가 (객체 vs 문자열 호환)
+        
+        // Priority
         const priRows = document.querySelectorAll('#priorityBox .priority-row');
         if(d.pri && Array.isArray(d.pri)) {
             d.pri.forEach((v, i) => {
                 if(priRows[i]) {
-                    // v가 객체면 v.t 사용, 아니면(문자열) v 사용, v가 [object Object] 문자열로 깨졌으면 ''로 초기화
-                    let txt = '';
-                    let chk = false;
-                    
-                    if (v !== null && typeof v === 'object') {
-                        txt = v.t || '';
-                        chk = v.c || false;
-                    } else {
-                        txt = String(v);
-                    }
-                    
-                    if (txt === '[object Object]') txt = ''; // 깨진 데이터 복구용
-                    
-                    safeVal(priRows[i].querySelector('textarea'), txt);
+                    const txt = typeof v === 'object' ? v.t : v;
+                    const chk = typeof v === 'object' ? v.c : false;
+                    priRows[i].querySelector('textarea').value = txt;
                     priRows[i].querySelector('input[type="checkbox"]').checked = chk;
                 }
             });
         }
 
-        // ... 기존 applyDataToUI 코드 ...
-        const tBlocks = document.querySelectorAll('.todo-block');
-        if(d.todo) d.todo.forEach((v,i) => {
-            if(tBlocks[i]) {
-                safeVal(tBlocks[i].querySelector('.t-start'), v.s);
-                safeVal(tBlocks[i].querySelector('.t-end'), v.e);
-                
-                const chk = tBlocks[i].querySelector('.todo-check');
-                // 완료(체크) 상태가 되면 텍스트 수정 불가, 체크 해제 시 수정 가능
-                if(chk.checked !== v.c) {
-                    chk.checked = v.c;
-                    const content = tBlocks[i].querySelector('.todo-content');
-                    if(v.c) {
-                        content.classList.add('completed');
-                        content.readOnly = true; // 읽기 전용으로 설정
-                    } else {
-                        content.classList.remove('completed');
-                        content.readOnly = false; // 수정 가능으로 복구
-                    }
-                }
-                
-                const prioEl = tBlocks[i].querySelector('.priority-current');
-                if(prioEl) {
-                    const savedP = v.p || '0';
-                    if (prioEl.getAttribute('data-val') !== savedP) {
-                        updatePriorityUI(prioEl, savedP);
-                    }
-                }
+        // ToDo
+        const todoBox = document.getElementById('todoBox');
+        todoBox.innerHTML = '';
+        if(d.todo && d.todo.length > 0) {
+            d.todo.forEach(v => addTodoRow(v));
+        } else {
+            for(let i=0; i<10; i++) addTodoRow();
+        }
 
-                safeVal(tBlocks[i].querySelector('.todo-content'), v.t);
-            }
-        });
+        // Timeline
+        const timeBox = document.getElementById('timelineBox');
+        timeBox.innerHTML = '';
+        if(d.line && d.line.length > 0) {
+            d.line.forEach(v => addTimelineRow(v));
+        } else {
+            for(let i=0; i<10; i++) addTimelineRow();
+        }
 
-        const lBlocks = document.querySelectorAll('.timeline-block');
-        if(d.line) d.line.forEach((v,i) => {
-            if(lBlocks[i]) {
-                const s = lBlocks[i].querySelector('.tm-start');
-                const e = lBlocks[i].querySelector('.tm-end');
-                safeVal(s, v.s);
-                safeVal(e, v.e);
-                if(v.s) s.classList.add('filled'); else s.classList.remove('filled');
-                if(v.e) e.classList.add('filled'); else e.classList.remove('filled');
-                safeVal(lBlocks[i].querySelector('.timeline-text'), v.t);
-            }
-        });
-
+        // Note & Sp/Sum
         const noteDiv = document.getElementById('mainNote');
         if(d.note && noteDiv.innerHTML !== d.note && document.activeElement !== noteDiv) {
             noteDiv.innerHTML = d.note;
         }
-        
-        safeVal(document.getElementById('sp1'), d.sp[0]||''); 
-        safeVal(document.getElementById('sp2'), d.sp[1]||'');
-        safeVal(document.getElementById('sp3'), d.sp[2]||'');
-        safeVal(document.getElementById('thanksText'), d.sum[0]||'');
-        safeVal(document.getElementById('summaryText'), d.sum[1]||'');
+        ['sp1','sp2','sp3'].forEach((id, i) => {
+            const el = document.getElementById(id);
+            if(d.sp && d.sp[i]) el.value = d.sp[i];
+        });
+        ['thanksText','summaryText'].forEach((id, i) => {
+             const el = document.getElementById(id);
+             if(d.sum && d.sum[i]) el.value = d.sum[i];
+        });
     }
 
-    // --- Original Logic Functions ---
-    function formatDoc(cmd, value=null) {
-        if(value) document.execCommand(cmd, false, value);
-        else document.execCommand(cmd);
-        document.getElementById('mainNote').focus();
-        if(window.appSave) window.appSave();
-    }
-
-    // [수정됨] ToDo 렌더링 함수: 중요도 선택기 순서 변경 (업무-교회-개인-기타)
-    function renderTodo(count) {
-        const box = document.getElementById('todoBox');
-        let html = '';
-        for(let i=0; i<count; i++) {
-            html += `
-            <div class="todo-block">
-                <div class="todo-header">
-                    <input type="text" class="date-input t-start" placeholder="시작" readonly 
-                           onclick="handleDateClick(this)"
-                           onkeydown="handleInputKey(event, this, 'date-kr')"
-                           oncontextmenu="openCtx(event, this, 'reset-only')">
-                    <input type="text" class="date-input t-end" placeholder="마침" readonly>
-                </div>
-                <div class="todo-body">
-                    <div class="todo-chk-wrap">
-                        <input type="checkbox" class="todo-check" onchange="toggleTodo(this)">
-                    </div>
-                    
-                    <!-- [수정] 중요도 메뉴 순서 변경: 업무 -> 교회 -> 개인 -> 기타 -->
-                    <div class="priority-wrap" onclick="togglePrio(this)">
-                        <div class="priority-current prio-0" data-val="0">기</div>
-                        <div class="priority-menu">
-                            <div class="priority-option prio-3" onclick="setPrio(event, this, '3')">업무</div>
-                            <div class="priority-option prio-1" onclick="setPrio(event, this, '1')">교회</div>
-                            <div class="priority-option prio-2" onclick="setPrio(event, this, '2')">개인</div>
-                            <div class="priority-option prio-0" onclick="setPrio(event, this, '0')">기타</div>
-                        </div>
-                    </div>
-
-                    <textarea class="todo-content" placeholder="할 일 입력"></textarea>
-                </div>
-            </div>`;
+    // --- 유틸리티 함수들 ---
+    function getPrioChar(val) {
+        switch(val) {
+            case '3': return '업';
+            case '2': return '개';
+            case '1': return '교';
+            default: return '기';
         }
-        box.innerHTML = html;
+    }
+
+    function getFormattedDateTime() {
+        const now = new Date();
+        const mm = (now.getMonth() + 1).toString().padStart(2, '0');
+        const dd = now.getDate().toString().padStart(2, '0');
+        const hh = now.getHours().toString().padStart(2, '0');
+        const mi = now.getMinutes().toString().padStart(2, '0');
+        return `${mm}월${dd}일 ${hh}:${mi}`;
+    }
+
+    function handleDateClick(el) { el.value = getFormattedDateTime(); if(window.appSave) window.appSave(); }
+    function handleTimeClick(el) { el.value = getFormattedDateTime(); el.classList.add('filled'); if(window.appSave) window.appSave(); }
+    
+    function toggleTodo(chk) {
+        const block = chk.closest('.todo-block');
+        const end = block.querySelector('.t-end');
+        const txt = block.querySelector('.todo-content');
+        if(chk.checked) {
+            end.value = getFormattedDateTime();
+            txt.classList.add('completed');
+            txt.readOnly = true;
+        } else {
+            end.value = '';
+            txt.classList.remove('completed');
+            txt.readOnly = false;
+        }
+        if(window.appSave) window.appSave();
     }
 
     function togglePrio(wrapper) {
@@ -750,134 +646,23 @@
     }
 
     function setPrio(e, el, val) {
-        e.stopPropagation(); 
+        e.stopPropagation();
         const wrapper = el.closest('.priority-wrap');
         const current = wrapper.querySelector('.priority-current');
-        updatePriorityUI(current, val);
+        current.setAttribute('data-val', val);
+        current.className = `priority-current prio-${val}`;
+        current.innerText = getPrioChar(val);
         wrapper.querySelector('.priority-menu').style.display = 'none';
         if(window.appSave) window.appSave();
     }
 
-    function updatePriorityUI(el, val) {
-        el.setAttribute('data-val', val);
-        el.className = 'priority-current'; 
-        el.classList.add('prio-' + val);
-        
-        // [수정] 표시 텍스트 순서 및 매핑 (데이터 호환성 유지)
-        // 3:업무, 1:교회, 2:개인, 0:기타
-        switch(val) {
-            case '3': el.innerText = '업무'; break;
-            case '1': el.innerText = '교회'; break;
-            case '2': el.innerText = '개인'; break;
-            default:  el.innerText = '기타'; break;
-        }
-    }
-
-    function renderTimeline(count) {
-        const box = document.getElementById('timelineBox');
-        let html = '';
-        for(let i=0; i<count; i++) {
-            html += `
-            <div class="timeline-block">
-                <div class="timeline-header">
-                    <input type="text" class="time-box tm-start" placeholder="시작" readonly 
-                           onclick="handleTimeClick(this)" 
-                           onkeydown="handleInputKey(event, this, 'time-kr')" 
-                           oncontextmenu="openCtx(event, this, 'time-menu')">
-                    <input type="text" class="time-box tm-end" placeholder="마침" readonly 
-                           onclick="handleTimeClick(this)" 
-                           onkeydown="handleInputKey(event, this, 'time-kr')" 
-                           oncontextmenu="openCtx(event, this, 'time-menu')">
-                </div>
-                <textarea class="timeline-text" placeholder="내용"></textarea>
-            </div>`;
-        }
-        box.innerHTML = html;
-    }
-
-    function handleDateClick(el) {
-        const now = new Date();
-        el.value = getFormattedDateTime();
+    function formatDoc(cmd, value=null) {
+        document.execCommand(cmd, false, value);
+        document.getElementById('mainNote').focus();
         if(window.appSave) window.appSave();
     }
 
-    function handleTimeClick(el) {
-        el.value = getFormattedDateTime();
-        el.classList.add('filled');
-        if(window.appSave) window.appSave();
-    }
-
-    function handleInputKey(e, el, type) {
-        if(e.key === 'Enter') {
-            e.preventDefault();
-            // 모든 날짜/시간 입력에서 동일한 포맷 사용
-            el.value = getFormattedDateTime();
-            if(type === 'time-kr') el.classList.add('filled');
-            if(window.appSave) window.appSave();
-        }
-    }
-
-    function getFormattedDateTime() {
-        const now = new Date();
-        const yy = now.getFullYear().toString().slice(-2);
-        const mm = (now.getMonth() + 1).toString().padStart(2, '0');
-        const dd = now.getDate().toString().padStart(2, '0');
-        const hh = now.getHours().toString().padStart(2, '0');
-        const mi = now.getMinutes().toString().padStart(2, '0');
-        return `${yy}년${mm}월${dd}일${hh}시${mi}분`;
-    }
-
-    function parseDateTimeInput(input) {
-        const now = new Date();
-        let yy = now.getFullYear().toString().slice(-2);
-        let mm = (now.getMonth() + 1).toString().padStart(2, '0');
-        let dd = now.getDate().toString().padStart(2, '0');
-        let hh = now.getHours().toString().padStart(2, '0');
-        let mi = now.getMinutes().toString().padStart(2, '0');
-
-        const nums = input.replace(/[^0-9]/g, '');
-        
-        if (nums.length === 10) {
-            yy = nums.slice(0, 2);
-            mm = nums.slice(2, 4);
-            dd = nums.slice(4, 6);
-            hh = nums.slice(6, 8);
-            mi = nums.slice(8, 10);
-        } else if (nums.length === 4) {
-            hh = nums.slice(0, 2);
-            mi = nums.slice(2, 4);
-        } else if (nums.length === 3) {
-            hh = nums.slice(0, 1).padStart(2, '0');
-            mi = nums.slice(1, 3);
-        } else if (input.includes('-')) {
-            const parts = input.split('-');
-            if(parts.length === 2) {
-                 hh = parts[0].padStart(2, '0');
-                 mi = parts[1].padStart(2, '0');
-            }
-        } else {
-            return null;
-        }
-
-        return `${yy}년${mm}월${dd}일${hh}시${mi}분`;
-    }
-
-    function toggleTodo(chk) {
-        const block = chk.closest('.todo-block');
-        const end = block.querySelector('.t-end');
-        const txt = block.querySelector('.todo-content');
-        if(chk.checked) {
-            end.value = getFormattedDateTime();
-            txt.classList.add('completed');
-            txt.readOnly = true; 
-        } else {
-            end.value = '';
-            txt.classList.remove('completed');
-            txt.readOnly = false; 
-        }
-        if(window.appSave) window.appSave();
-    }
-
+    // Context Menu Logic
     function openCtx(e, el, type) {
         e.preventDefault();
         ctxTarget = el;
@@ -887,43 +672,28 @@
         const itemManual = document.getElementById('ctxItemManual');
         const itemClear = document.getElementById('ctxItemClear');
 
-        itemInsert.style.display = 'none';
-        itemManual.style.display = 'none';
-        itemClear.innerText = '지우기';
+        itemInsert.style.display = (type === 'reset-only' || type === 'time-menu') ? 'none' : 'block';
+        itemManual.style.display = (type === 'time-menu') ? 'block' : 'none';
+        itemClear.innerText = (type === 'reset-only' || type === 'time-menu') ? '초기화' : '지우기';
 
-        if (type === 'reset-only') {
-            itemClear.innerText = '초기화';
-            itemManual.style.display = 'block'; 
-        } else if (type === 'time-menu') {
-            itemManual.style.display = 'block'; 
-            itemClear.innerText = '초기화';
-        } else {
-            itemInsert.style.display = 'block';
-            itemInsert.innerText = "오늘 날짜 입력";
-        }
+        if(type !== 'reset-only' && type !== 'time-menu') itemInsert.innerText = "현재 시간 입력";
 
         menu.style.display = 'block';
-        
-        let x = e.pageX;
-        let y = e.pageY;
-        if(x + 120 > window.innerWidth) x -= 120;
-        
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
+        menu.style.left = Math.min(e.pageX, window.innerWidth - 120) + 'px';
+        menu.style.top = e.pageY + 'px';
     }
 
     function handleCtx(action) {
         if(!ctxTarget) return;
-        
         if (action === 'manual') {
-            const input = prompt("시간을 입력하세요 (예: 2512091648, 12-11, 1648)");
+            const input = prompt("시간 입력 (예: 1430)");
             if (input) {
-                const formattedTime = parseDateTimeInput(input);
-                if (formattedTime) {
-                    ctxTarget.value = formattedTime;
+                const nums = input.replace(/[^0-9]/g, '');
+                if (nums.length >= 3) {
+                    const h = nums.length===3 ? nums.slice(0,1) : nums.slice(0,2);
+                    const m = nums.length===3 ? nums.slice(1) : nums.slice(2);
+                    ctxTarget.value = `${h}시 ${m}분`;
                     ctxTarget.classList.add('filled');
-                } else {
-                    alert("올바른 형식이 아닙니다.");
                 }
             }
         } else if (action === 'insert') {
@@ -932,68 +702,58 @@
             ctxTarget.value = '';
             ctxTarget.classList.remove('filled');
         }
-        
         if(window.appSave) window.appSave();
-        document.getElementById('ctxMenu').style.display = 'none'; 
+        document.getElementById('ctxMenu').style.display = 'none';
     }
 
+    // Export logic
     function openResetModal() { document.getElementById('resetModal').style.display='flex'; }
     function closeResetModal() { document.getElementById('resetModal').style.display='none'; }
-    
     function executeReset() {
         if(document.getElementById('chkPri').checked) {
-            document.querySelectorAll('#priorityBox .priority-row').forEach(row => {
-                row.querySelector('textarea').value = '';
-                row.querySelector('input[type="checkbox"]').checked = false;
+            document.querySelectorAll('#priorityBox .priority-row').forEach(r => {
+                r.querySelector('textarea').value = '';
+                r.querySelector('input[type="checkbox"]').checked = false;
             });
         }
+        if(document.getElementById('chkTodo').checked) {
+            document.getElementById('todoBox').innerHTML = '';
+            for(let i=0; i<10; i++) addTodoRow();
+        }
         if(document.getElementById('chkTime').checked) {
-            document.querySelectorAll('.timeline-block input').forEach(e=> { e.value=''; e.classList.remove('filled'); });
-            document.querySelectorAll('.timeline-block textarea').forEach(e=>e.value='');
+            document.getElementById('timelineBox').innerHTML = '';
+            for(let i=0; i<10; i++) addTimelineRow();
         }
         if(document.getElementById('chkNote').checked) {
             document.getElementById('mainNote').innerHTML = '';
             ['sp1','sp2','sp3','thanksText','summaryText'].forEach(id=>document.getElementById(id).value='');
         }
-        if(document.getElementById('chkTodo').checked) {
-            const blocks = document.querySelectorAll('.todo-block');
-            blocks.forEach(r => {
-                r.querySelector('.t-start').value=''; r.querySelector('.t-end').value='';
-                r.querySelector('.todo-check').checked=false; r.querySelector('.todo-content').value='';
-                r.querySelector('.todo-content').classList.remove('completed');
-                r.querySelector('.todo-content').readOnly = false;
-                const p = r.querySelector('.priority-current');
-                if(p) updatePriorityUI(p, '0');
-            });
-        }
         if(window.appSave) window.appSave();
         closeResetModal();
     }
-
+    
     function exportData() {
-        // [중요] 새로 배포한 구글 앱스 스크립트 URL을 여기에 넣으세요
         const scriptURL = "https://script.google.com/macros/s/AKfycbxX3gDWPWkeL4F6A7LVnyH1Ti6QueDJLjbDzO4e2ro4_nNkaX9JQc5m2JNNRNZM53je/exec"; 
-
-        if(!scriptURL || scriptURL === "여기에_구글_웹앱_URL_붙여넣기") {
-            alert("코드를 수정하여 'scriptURL' 변수에 구글 앱스 스크립트 배포 주소를 입력해주세요!");
-            return;
-        }
-
-        if(!confirm("체크된 항목만 내보내고 화면을 정리하시겠습니까?\n(미완료 항목은 상단으로 이동됩니다)")) return;
-
+        if(!confirm("체크된 항목을 내보내시겠습니까?")) return;
+        
+        // Export Logic 복구 (V11 참고)
         const btn = document.querySelector('.btn-export');
         const originalText = btn.innerText;
         btn.innerText = "전송 중...";
 
-        // [수정] 중요도 매핑 함수 (숫자 -> 텍스트, 순서 정리)
-        const getPrioText = (val) => {
-            if(val === '3') return '업무';
-            if(val === '1') return '교회';
-            if(val === '2') return '개인';
-            return '기타';
+        const getPrioShape = (val) => {
+            if(val === '3') return '★';
+            if(val === '2') return '■';
+            if(val === '1') return '●';
+            return '○';
         };
 
-        // 1. 데이터 분류
+        const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
+        const exportPri = priRows
+            .filter(r => r.querySelector('input[type="checkbox"]').checked)
+            .map(r => r.querySelector('textarea').value);
+        
+        // 데이터 수집
         const allBlockEls = Array.from(document.querySelectorAll('.todo-block'));
         const allTodosRaw = allBlockEls.map(r => ({
             s: r.querySelector('.t-start').value,
@@ -1009,24 +769,10 @@
                 s: t.s,
                 e: t.e,
                 c: t.c,
-                // [수정] 내보낼 때 텍스트로 변환 (업무, 개인...)
-                p: getPrioText(t.p_val), 
+                p: getPrioShape(t.p_val), 
                 t: t.t
             }));
-        
-        const keptTodos = allTodosRaw.filter(t => t.c === false && t.t.trim() !== "");
 
-        // 1. Priority Data (체크된 것만 추출)
-        const priRows = Array.from(document.querySelectorAll('#priorityBox .priority-row'));
-        const exportPri = priRows
-            .filter(r => r.querySelector('input[type="checkbox"]').checked)
-            .map(r => r.querySelector('textarea').value);
-        
-        const keptPriTexts = priRows
-            .filter(r => !r.querySelector('input[type="checkbox"]').checked && r.querySelector('textarea').value.trim() !== "")
-            .map(r => r.querySelector('textarea').value);
-
-        // 3. TimeLine Data
         const timelineData = Array.from(document.querySelectorAll('.timeline-block'))
             .map(b => ({
                 s: b.querySelector('.tm-start').value,
@@ -1036,7 +782,7 @@
             .filter(l => l.t.trim() !== ""); 
 
         const payload = {
-            pri: exportPri, // 체크된 것만 전송
+            pri: exportPri, 
             todo: exportTodos, 
             line: timelineData, 
             note: document.getElementById('mainNote').innerText,
@@ -1059,72 +805,20 @@
         .then(response => response.json())
         .then(data => {
             if(data.result === 'success') {
-                alert("성공적으로 저장되었습니다!\n각 항목이 개별 행으로 입력됩니다.");
-                resetAndRestore(keptTodos, keptPriTexts);
+                alert("성공적으로 저장되었습니다!");
+                // 성공 후 정리 로직은 사용자 선택에 맡기거나 여기 추가
             } else {
                 alert("전송 실패: " + data.error);
             }
         })
         .catch(error => {
             console.error('Export Error:', error);
-            alert("전송 요청 완료! (데이터가 시트에 들어갔는지 확인하세요)\n화면을 정리합니다.");
-            resetAndRestore(keptTodos, keptPriTexts);
+            alert("전송 요청 완료! (데이터가 시트에 들어갔는지 확인하세요)");
         })
         .finally(() => {
             btn.innerText = originalText;
         });
     }
-
-    // [수정됨] 복구 로직에 Priority 처리 추가
-    function resetAndRestore(keptTodos, keptPriTexts) {
-        // A. 초기화
-        const priRows = document.querySelectorAll('#priorityBox .priority-row');
-        priRows.forEach(r => {
-            r.querySelector('textarea').value = '';
-            r.querySelector('input[type="checkbox"]').checked = false;
-        });
-
-        document.querySelectorAll('.timeline-block input').forEach(e => { e.value = ''; e.classList.remove('filled'); });
-        document.querySelectorAll('.timeline-block textarea').forEach(e => e.value = '');
-        document.getElementById('mainNote').innerHTML = '';
-        ['sp1', 'sp2', 'sp3', 'thanksText', 'summaryText'].forEach(id => document.getElementById(id).value = '');
-
-        const blocks = document.querySelectorAll('.todo-block');
-        blocks.forEach(r => {
-            r.querySelector('.t-start').value = '';
-            r.querySelector('.t-end').value = '';
-            r.querySelector('.todo-check').checked = false;
-            r.querySelector('.todo-content').value = '';
-            r.querySelector('.todo-content').classList.remove('completed');
-            r.querySelector('.todo-content').readOnly = false; 
-            const p = r.querySelector('.priority-current');
-            if(p) updatePriorityUI(p, '0'); 
-        });
-
-        // B. Priority 복구 (위에서부터 채우기)
-        if (keptPriTexts && keptPriTexts.length > 0) {
-            keptPriTexts.forEach((txt, idx) => {
-                if (priRows[idx]) {
-                    priRows[idx].querySelector('textarea').value = txt;
-                }
-            });
-        }
-
-        // C. ToDo 복구
-        keptTodos.forEach((item, index) => {
-            if(blocks[index]) {
-                blocks[index].querySelector('.t-start').value = item.s;
-                blocks[index].querySelector('.t-end').value = item.e; 
-                blocks[index].querySelector('.todo-content').value = item.t;
-                
-                const p = blocks[index].querySelector('.priority-current');
-                if(p) updatePriorityUI(p, item.p_val);
-            }
-        });
-
-        if(window.forceSave) window.forceSave(); 
-    }
 </script>
 </body>
 </html>
-
